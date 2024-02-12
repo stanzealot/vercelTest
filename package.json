@@ -7,7 +7,7 @@
   "author": "stanzealot <stanzealot@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "build": "tsc -p .",
+    "build": "tsc",
     "dev": "cross-env DEBUG=dev tsnd --respawn --files src/app.ts",
     "lint": "eslint . --ext .ts",
     "start": "node dist/src/app.js",
