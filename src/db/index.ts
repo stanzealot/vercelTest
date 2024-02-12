@@ -2,7 +2,7 @@ import { Sequelize,Options } from "sequelize";
 import serverConfig from "../config/server.config";
 const options: Options = {
     logging: serverConfig.NODE_ENV === 'development' ? console.log : false,
-    dialect: 'mysql',
+    dialect: 'postgres', /* one of 'mysql' | 'postgres' | 'sqlite' | 'mariadb' | 'mssql' | 'db2' | 'snowflake' | 'oracle' */
     host: serverConfig.DB_HOST,
     username: serverConfig.DB_USERNAME,
     password: serverConfig.DB_PASSWORD,
