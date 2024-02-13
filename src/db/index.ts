@@ -15,6 +15,7 @@ const options: Options = {
       },
     },
 };
+
 const config = {
     production:
         new Sequelize(
@@ -23,15 +24,13 @@ const config = {
             serverConfig.DB_PASSWORD,
             options
         ),
-    staging:
-        new Sequelize(
-            serverConfig.DB_NAME,
-            serverConfig.DB_USERNAME,
-            serverConfig.DB_PASSWORD,
-            options
-        ),
-
     development:
+        new Sequelize('postgres', 'postgres', 'Me4you6969', {
+            host: 'localhost',
+            dialect:'postgres' /* one of 'mysql' | 'postgres' | 'sqlite' | 'mariadb' | 'mssql' | 'db2' | 'snowflake' | 'oracle' */
+        }),
+
+    stagging:
         new Sequelize('app', '', '', {
             dialect: 'sqlite',
             storage: './database.sqlite',
@@ -41,7 +40,7 @@ const config = {
 }
 
 
-const ENV = serverConfig.NODE_ENV ==='development'?'development':'production'
+const ENV = serverConfig.NODE_ENV ==='development'?'development':serverConfig.NODE_ENV ==='production'? 'production' : 'stagging'
 const db = config[ENV];
 
 export default db;
