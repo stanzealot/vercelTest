@@ -10,7 +10,7 @@
     "build": "tsc",
     "dev": "cross-env DEBUG=dev tsnd --respawn --files src/app.ts",
     "lint": "eslint . --ext .ts",
-    "start": "node dist/src/app.js",
+    "start": "node dist/app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
