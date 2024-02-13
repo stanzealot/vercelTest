@@ -6,3 +6,4 @@ declare module 'express' {
     permissions: string[];
   }
 }
+
