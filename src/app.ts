@@ -9,7 +9,7 @@ import db from './db';
 import routes from './routes/index.route';
 
 
-class Server {
+class Server { 
     public app: Application;
   
     protected port: number;
