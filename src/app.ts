@@ -12,7 +12,7 @@ import routes from './routes/index.route';
 class Server { 
     public app: Application;
   
-    protected port: number;
+    protected port: number; 
   
     private corsOptions: cors.CorsOptions;
   
