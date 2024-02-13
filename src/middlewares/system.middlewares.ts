@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import serverConfig from '../config/server.config';
 import { SystemError } from '../errors';
-import Joi from 'joi';
+import Joi, { any } from 'joi';
 
 class SystemMiddlewares {
   public async errorHandler(

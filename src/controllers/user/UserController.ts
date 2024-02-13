@@ -2,10 +2,11 @@ import { Request, Response,NextFunction } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { UserInstance } from '../../db/models/userModel';
 import bcrypt from 'bcryptjs';
-import { createUserSchema, generateToken, loginUserSchema, options } from '../../utils/utils';
-import { emailVerificationView } from '../../email/emailVerification';
+import { changePasswordSchema, createUserSchema, generateToken, loginUserSchema, options, userUpdateSchema } from '../../utils/utils';
+import { emailVerificationView, forgotPasswordVerification } from '../../email/emailVerification';
 import jwt from 'jsonwebtoken';
 import Mailer from '../../email/sendMail'
+import serverConfig from '../../config/server.config';
 
 
 const passPhrase = process.env.JWT_SECRETE as string;
@@ -84,25 +85,17 @@ export default class UserController {
     }
 
 
-    protected async loginUser(
-      req: Request,
-      res: Response,
-      next: NextFunction,
-    ): Promise<Response> {
+    protected async loginUser(req: Request,res: Response,next: NextFunction): Promise<Response> {
       try {
-        console.log("reach here: ")
+        
         const { email, password } = req.body;
-        console.log("body: ",req.body)
+
         const validationResult = loginUserSchema.validate(req.body, options);
     
         if (validationResult.error) {
           return res.status(400).json({ error: validationResult.error.details[0].message });
         }
         let User = (await UserInstance.findOne({ where: { email: email } })) as unknown as { [key: string]: string };
-    
-        // if (!User) {
-        //   User = (await UserInstance.findOne({ where: { email: email } })) as unknown as { [key: string]: string };
-        // }
     
         if (!User) {
           return res.status(403).json({ error: 'User not found' });
@@ -131,6 +124,7 @@ export default class UserController {
         next(error);
       }
     }
+
     protected async verifyUser(
       req: Request,
       res: Response,
@@ -163,22 +157,176 @@ export default class UserController {
       }
     }
 
+    protected async forgotPassword(
+      req: Request,
+      res: Response,
+      next: NextFunction,
+    ): Promise<unknown> {
+      try {
+        const { email } = req.body;
+        const user = (await UserInstance.findOne({
+          where: {
+            email: email,
+          },
+        })) as unknown as { [key: string]: string };
+
+        if (!user) {
+          return res.status(404).json({
+            error: 'email not found',
+          });
+        }
+        const { id } = user;
+        const html = forgotPasswordVerification(id);
+        await Mailer.sendEmail(fromUser, req.body.email, subject, html);
+
+        return res.status(200).json({
+          message: 'Check email for the verification link',
+        });
+
+      } catch (error) {
+        serverConfig.DEBUG(
+          `Error in forget password method: ${error}`,
+        );
+        console.log(error);
+        next(error);
+      }
+    }
+
+
+    protected async changePassword(
+      req: Request,
+      res: Response,
+      next: NextFunction,
+    ): Promise<unknown> {
+      try {
+        const { id } = req.params;
+
+        const validationResult = changePasswordSchema.validate(req.body, options);
+        if (validationResult.error) {
+          return res.status(400).json({
+            error: validationResult.error.details[0].message,
+          });
+        }
+
+        const user = await UserInstance.findOne({
+          where: {
+            id: id,
+          },
+        });
+        if (!user) {
+          return res.status(403).json({
+            error: 'user does not exist',
+          });
+        }
+        
+        const passwordHash = await bcrypt.hash(req.body.password, 8);
+
+        await user?.update({
+          password: passwordHash,
+        });
+        return res.status(200).json({
+          message: 'Password Successfully Changed',
+        });
+
+      } catch (error) {
+        serverConfig.DEBUG(
+          `Error in change password method: ${error}`,
+        );
+        console.log(error);
+        next(error);
+      }
+    }
+
+    protected async update(req: Request, res: Response, next: NextFunction): Promise<Response> {
+      try {
+        const { id } = req.params;
+        const record = await UserInstance.findOne({ where: { id } });
+
+        if (!record) {
+          return res.status(400).json({ error: 'Invalid ID, User not found' });
+        }
+
+        const updateRecord = {
+          avatar:req.body?.avatar,
+          email: req.body?.email,
+          phoneNumber: req.body?.phoneNumber,
+          referral:req.body?.referral,
+          isAgreement:req.body?.isAgreement,
+          walletBalance: req.body?.walletBalance,
+        };
+
+        const validateUpdate = userUpdateSchema.validate(updateRecord, options);
+
+        if (validateUpdate.error) {
+          return res.status(400).json({ error: validateUpdate.error.details[0].message });
+        }
+    
+        const updateUserRecord = await record?.update(updateRecord);
+    
+        return res.status(200).json({
+          message: 'Update Successful',
+          record: updateUserRecord,
+        });
+
+      } catch (error) {
+        console.log(error)
+        return res.status(500).json({
+          error: 'Failed to update record',
+          route:'/user/:id'
+        });
+      }
+    }
+
 
     protected async index(req: Request, res: Response, next: NextFunction) {
       try{ 
-      
-        
-        return  res.status(200).json({
-            msg:"welcome to moniwizr",
-            // count: trainings.count,
-            // trainings: trainings.rows
-        })
-      }catch(err){
-          console.log(err)
+          const users = await UserInstance.findAll();
+          return res.status(200).json({ status: 200, msg: 'Users found successfully',users });
+        }catch(err){
+            console.log(err)
+            res.status(500).json({
+            msg:res.status(500).send(err),
+          })
+        };
+    }
+
+    protected async get(req: Request, res: Response, next: NextFunction) {
+      try{ 
+        const { id } = req.params;
+        const user = await UserInstance.findOne({where: { id }});
+        return res.status(200).json({
+          message: 'user fetched successful',
+          user,
+        });
+        }catch(err){
+            console.log(err)
+            res.status(500).json({
+            msg:res.status(500).send(err),
+            route:'/user/:id'
+          })
+        };
+    }
+
+    protected async delete(req: Request, res: Response, next: NextFunction): Promise<Response> {
+      try {
+      const { params: { id } } = req;
+
+       const record = await UserInstance.findOne({where: {id}})
+       if(!record){
+          return res.status(404).json({
+             msg:"Cannot find user"
+          })
+        }
+        const deletedRecord = await record.destroy()
+        return res.status(200).json({
+          msg: 'user deleted successfully.',
+        });
+      } catch (err) {
+        console.log(err)
           res.status(500).json({
           msg:res.status(500).send(err),
-          route: 'GET /training'
+          route:'/user/:id'
          })
-        };
+      }
     }
 }

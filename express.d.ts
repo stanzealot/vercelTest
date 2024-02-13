@@ -1,10 +1,18 @@
+
+
+
 declare namespace Express {
     interface Request {
-      user: any;
-      
+      user: any; 
+      queryOpts:any;
     }
 }
   
+
+
+
+
+
   
   
   

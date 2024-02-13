@@ -35,6 +35,16 @@ export const loginUserSchema = Joi.object().keys({
     return jwt.sign(user, passPhrase, { expiresIn: '7d' });
   };
 
+  export const userUpdateSchema = Joi.object().keys({
+    avatar:Joi.string().optional().allow(''),
+    email: Joi.string().optional().allow(''),
+    phoneNumber: Joi.string().optional().allow(''),
+    referral:Joi.string().optional().allow(''),
+    isAgreement:Joi.boolean(),
+    walletBalance: Joi.number(),
+  });
+  
+
   
 export const options ={
     abortEarly:false,
