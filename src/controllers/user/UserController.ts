@@ -147,7 +147,8 @@ export default class UserController {
           isVerified: true,
         });
     
-      return res.status(302).redirect(`${process.env.FRONTEND_URL}/user/login`);
+      // return res.status(302).redirect(`${process.env.FRONTEND_URL}/user/login`);
+      return res.status(302).redirect(`${process.env.FRONTEND_URL}`);
       } catch (error) {
         // serverConfig.DEBUG(
         //   `Error in user verification get controller method: ${error}`,
